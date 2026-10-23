@@ -1,0 +1,5 @@
+interface:
+  display_name: "Study Loop"
+  short_description: "把想学的东西变成一门属于你的课"
+policy:
+  allow_implicit_invocation: false
