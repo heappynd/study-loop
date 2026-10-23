@@ -1,0 +1,11 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "学习",
+      "description": "把想学的东西变成一门有状态的课程站：mission 驱动、15 分钟一课、检索练习与间隔复习。",
+      "skills": ["study-loop"]
+    }
+  ]
+}
