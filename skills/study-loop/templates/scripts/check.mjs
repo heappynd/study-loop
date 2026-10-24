@@ -65,33 +65,27 @@ if (!index) {
   }
 }
 
-// 3. 导航
-const navRaw = read('docs/_nav.json')
-if (!navRaw) {
-  fail('docs/_nav.json', '不存在，导航栏是空的')
-} else {
-  let nav = null
-  try {
-    nav = JSON.parse(navRaw)
-  } catch (error) {
-    fail('docs/_nav.json', `不是合法 JSON：${error.message}`)
+// 3. 站点结构：导航与侧边栏由 scripts/sidebar.mjs 扫描 docs/ 生成
+if (!read('scripts/sidebar.mjs')) {
+  fail('scripts/sidebar.mjs', '不存在，rspress.config.ts 的 import 会直接失败，站点起不来')
+}
+if (config) {
+  if (!/themeConfig\s*:/.test(config)) {
+    fail('rspress.config.ts', '缺少 themeConfig：导航与侧边栏都不会渲染')
+  } else if (!/\bsidebar\s*:/.test(config)) {
+    fail('rspress.config.ts', '缺少 themeConfig.sidebar：MISSION / GLOSSARY 会变成左侧空白的孤儿页')
   }
-  if (Array.isArray(nav)) {
-    const resolves = (link) => {
-      if (/^https?:/i.test(link)) return true
-      const clean = link.split('#')[0].split('?')[0].replace(/\.html$/, '').replace(/\/$/, '')
-      if (!clean) return true
-      const base = path.join(docsDir, clean)
-      return ['mdx', 'md'].some((ext) => fs.existsSync(`${base}.${ext}`)) || fs.existsSync(path.join(base, 'index.mdx'))
-    }
-    let hasLessons = false
-    for (const item of nav) {
-      if (!item || typeof item.link !== 'string') continue
-      if (!resolves(item.link)) fail('docs/_nav.json', `链接指向不存在的页面：${item.link}`)
-      if (item.link.startsWith('/lessons/')) hasLessons = true
-    }
-    if (!hasLessons) warn('docs/_nav.json', '导航里没有「课程」入口，建议加一项指向第 1 课')
+  if (!/\bnav\s*:/.test(config)) {
+    warn('rspress.config.ts', '没有 themeConfig.nav，顶部导航会是空的')
   }
+}
+// Rspress 2 把根级 _meta.json 当成 v1 遗留的导航配置，直接 process.exit(1)。
+if (fs.existsSync(path.join(docsDir, '_meta.json'))) {
+  fail('docs/_meta.json', 'Rspress 2 不支持根级 _meta.json（会 panic 退出），站点结构改在 scripts/sidebar.mjs 里')
+}
+// config 一旦定义了 nav，Rspress 就不再读 _nav.json，留着只会误导。
+if (fs.existsSync(path.join(docsDir, '_nav.json')) && /\bnav\s*:/.test(config || '')) {
+  warn('docs/_nav.json', 'config 里已定义 themeConfig.nav，这个文件不会生效，可以删掉')
 }
 
 // 4. 会发布的固定页面

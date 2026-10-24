@@ -40,8 +40,7 @@ npx skills add heappynd/study-loop --list
 
 ```
 my-topic/
-├── docs/                       # 只有这里会被发布（Rspress 的文档根）
-│   ├── _nav.json               # 顶部导航
+├── docs/                       # 只有这里会被发布（Rspress 的文档根），里面只有内容
 │   ├── index.mdx               # 课程首页（hero + 三张卡片）
 │   ├── MISSION.mdx             # 为什么学、什么算学会
 │   ├── GLOSSARY.mdx            # 本课程统一术语
@@ -50,7 +49,9 @@ my-topic/
 │   └── reference/              # 速查表，为快速查阅而生，可打印
 ├── components/                 # 5 个 React 组件（测验、回忆、步骤、来源）
 ├── styles/course.css           # 衬线正文、明暗主题、打印规则
-├── scripts/check.mjs           # npm run course:check
+├── scripts/
+│   ├── sidebar.mjs             # 扫 docs/ 生成导航与侧边栏，加课零配置
+│   └── check.mjs               # npm run course:check
 ├── learning-records/           # 你已掌握什么、证据是什么（不发布）
 ├── RESOURCES.md                # 可信来源清单（不发布）
 ├── NOTES.md                    # 你的偏好与教学笔记（不发布）
@@ -63,7 +64,8 @@ my-topic/
 
 上一版用 VitePress。换成 Rspress 2 之后，几件原本要自己维护的事消失了：
 
-- **侧边栏不用配置。** 往 `docs/lessons/` 里丢 `0002-xxx.mdx`，它自动出现在侧边栏，按文件名排序，文字取页面 `title`。VitePress 那套手写扫描逻辑不再需要。
+- **侧边栏不用配置。** 往 `docs/lessons/` 里丢 `0002-xxx.mdx`，它自动出现在侧边栏，按文件名排序，文字取页面 `title`。
+- **全站共用一份目录。** `/MISSION`、`/GLOSSARY`、任何速查页都有同一份课程列表，不会有左侧空白的孤儿页。Rspress 自带的 `_nav.json` 做不到这点——它按目录切分侧边栏。
 - **组件是真的组件。** 课程是 MDX，测验写 `options={['A','B']}`、`answer={0}`，不再是 Vue 的 `:options="[...]"` 和转义引号陷阱。
 - **死链会挡住构建。** 指向不存在页面的链接让 `npm run build` 直接失败并指出文件。
 - **构建和 dev server 可以同时跑。** 不用再「先停服务再构建」。

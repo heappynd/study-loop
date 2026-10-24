@@ -6,11 +6,10 @@
 
 ```
 .
-├── rspress.config.ts          # 站点配置：标题、语言、全局样式、全局组件
+├── rspress.config.ts          # 站点配置：标题、语言、全局样式、全局组件、导航与侧边栏
 ├── tsconfig.json
 ├── package.json
 ├── docs/                      # Rspress 的文档根，只有这里会被发布
-│   ├── _nav.json              # 顶部导航
 │   ├── index.mdx              # 首页（pageType: home）
 │   ├── MISSION.mdx            # 发布于 /MISSION
 │   ├── GLOSSARY.mdx           # 发布于 /GLOSSARY
@@ -25,13 +24,17 @@
 │   ├── steps.tsx              # → <Steps>
 │   ├── step.tsx               # → <Step>
 │   └── source.tsx             # → <Source>
+├── scripts/
+│   ├── sidebar.mjs            # 扫描 docs/ 生成导航与侧边栏
+│   └── check.mjs              # course:check 自检脚本
 ├── styles/course.css          # 共享排版、组件样式、打印规则
-├── scripts/check.mjs          # course:check 自检脚本
 ├── learning-records/          # 状态，不是内容
 │   └── 0001-<slug>.md
 ├── RESOURCES.md               # 不进站点
 └── NOTES.md                   # 不进站点
 ```
+
+`docs/` 里**只有内容**：页面和页面组。没有任何 `_nav.json`、`_meta.json` 这类结构文件——站点的信息架构在根目录的 `scripts/sidebar.mjs` 里，原因见下文。
 
 ### 发布什么，不发布什么
 
@@ -65,27 +68,34 @@ reviewAfter: "3d"
 
 ## 导航与侧边栏
 
-两者都由 Rspress 生成，只有一个文件需要维护。
+**两者都由 `scripts/sidebar.mjs` 扫描 `docs/` 生成**，在 `rspress.config.ts` 的 `themeConfig` 里注册。加课不需要改任何配置：新建 `docs/lessons/0003-xxx.mdx`，它自动出现在侧边栏「课程」组里，文字取该页 frontmatter 的 `title`。
 
-**导航栏**：`docs/_nav.json`，一个数组，每项 `{ "text": "...", "link": "..." }`，可加 `activeMatch` 正则。链接**不带扩展名**：`/lessons/0001-take-one-field`，不是 `/lessons/0001-take-one-field.mdx`。
+默认形状：
 
-```json
-[
-  { "text": "课程", "link": "/lessons/0001-take-one-field", "activeMatch": "^/lessons/" },
-  { "text": "速查", "link": "/reference/filters-basics", "activeMatch": "^/reference/" },
-  { "text": "目标", "link": "/MISSION" },
-  { "text": "术语表", "link": "/GLOSSARY" }
-]
-```
+- **顶部导航**：课程 / 速查 / 目标 / 术语表。「课程」永远指向第一课，不随课程数量变化。
+- **左侧侧边栏**：三组——「课程」列 `docs/lessons/` 全部，「速查」列 `docs/reference/` 全部，「关于这门课」放学习目标与术语表。
+- **全站共用同一份侧边栏**，包括 `/MISSION`、`/GLOSSARY`。从任何一页都能直接跳到任何一课。
 
-**侧边栏**：不用维护。Rspress 看到 `docs/lessons/` 就按文件名排序列出里面的每一页，文字取各页 `title`。加课不需要动任何配置。
+`title` 是侧边栏文字的唯一来源，所以它是必填项，不能靠文件名凑。
 
-规则：
+### 为什么不用 Rspress 自带的 `_nav.json` / `_meta.json`
 
-- 顺序 = 文件名顺序，所以**必须**用 `0001-` 这类零填充编号。`10-` 会排在 `2-` 前面。
-- 侧边栏是**按目录分区**的：`/lessons/*` 显示课程列表，`/reference/*` 显示速查列表，根目录页面（`/MISSION`、`/GLOSSARY`）不显示侧边栏。这是好事，不要为了「统一」去手写一份全站清单。
-- 以 `_` 开头的文件不进路由（`_draft.mdx` 可以当草稿）。
-- 想手工分组时才用 `_meta.json`——那是可选的高级用法，课程站默认不需要。
+下面三条都是实测结论，不是推测：
+
+1. **根级 `_meta.json` 在 Rspress 2 里会直接 panic。** 它被当成 v1 遗留的导航配置，源码里叫 `hintNavJsonChangeThenPanic`，命中就 `process.exit(1)`。
+2. **只有 `_nav.json` 时，侧边栏按目录切分。** Rspress 给每个子目录生成各自的侧边栏；`docs` 根下的 `MISSION.mdx`、`GLOSSARY.mdx` 不属于任何子目录，点进去左侧一片空白。课程站最不能接受的就是这个——学到第 5 课时看不到速查页，也回不到学习目标。
+3. **config 里一旦定义了 `nav` 或 `sidebar`，`_nav.json` 的自动导航就整体失效。** 所以两者不能混用，只能二选一。
+
+结论：**`docs/` 只放内容，信息架构放 `scripts/sidebar.mjs`。** 不要在 `docs/` 下新建 `_nav.json` 或 `_meta.json`，`course:check` 会拦下来。
+
+### 想改结构时
+
+只动 `scripts/sidebar.mjs` 里的两处：
+
+- `buildSidebar()`：三组的顺序与标题。
+- `buildNav()`：顶部导航项。
+
+改完 `npm run build` 确认。排序规则是**文件名**，所以课程必须用 `0001-` 这种零填充编号（`10-` 会排在 `2-` 前面）。
 
 ## 脚手架
 
@@ -106,8 +116,8 @@ reviewAfter: "3d"
 - `.gitignore`（工作区已有则不要覆盖）
 - `components/*.tsx`
 - `styles/course.css`
-- `docs/index.mdx`、`docs/_nav.json`
-- `scripts/check.mjs`
+- `docs/index.mdx`
+- `scripts/sidebar.mjs`、`scripts/check.mjs`
 
 `LESSON-TEMPLATE.md` 是写课的参考，放在 skill 根目录而不是 `templates/` 里：`templates/` 会被整份复制进工作区，模板若在里面就会变成一个全是占位符的页面。它也不能被复制进 `docs/lessons/`。
 
@@ -125,10 +135,11 @@ npm install
 
 先读 `rspress.config.ts` 和 `docs/index.mdx`，再动笔。然后：
 
-- 合并配置：保留用户的 `title`、`description`、`nav`、`themeConfig`、插件，只补 `globalStyles` 和 `markdown.globalComponents`。
+- 合并配置：保留用户的 `title`、`description`、`themeConfig` 里的其他字段与插件，只补 `globalStyles`、`markdown.globalComponents`、`themeConfig.nav`、`themeConfig.sidebar`。
 - `markdown.globalComponents` 是**数组**：往里追加我们的 5 个组件路径，不要替换掉他们已有的。
+- **别覆盖对方已有的 `themeConfig.nav` / `sidebar`。** 如果他们有，先问：是并入我们的课程分组，还是课程另开一个站点。两边都写会打架。
 - 如果用户已经有 `theme/` 自定义主题，不要动；我们的组件放在项目根的 `components/`，不冲突。
-- 如果站点在别的目录（`root: 'somewhere'`），按他们的 `root` 走：课程页放 `<root>/lessons/`，`_nav.json` 放 `<root>/`，`course:check` 也要能读到同一个位置——必要时调整 `check.mjs` 里的 `docsDir`。
+- 如果站点在别的目录（`root: 'somewhere'`），按他们的 `root` 走：课程页放 `<root>/lessons/`，`rspress.config.ts` 里传给 `buildNav`/`buildSidebar` 的是那个目录，`check.mjs` 里的 `docsDir` 也要指向同一个位置。
 - 其他页面别动。`docs/index.mdx` 是唯一可能破坏性的改动（把首页改成课程首页），改之前先问用户。
 - **采纳的站点也要能自检**：复制 `templates/scripts/check.mjs` 到 `scripts/check.mjs`，并在 `package.json` 的 `scripts` 里补 `"course:check": "node scripts/check.mjs"`。
 
@@ -140,7 +151,7 @@ npm install
 
 1. `rspress.config.ts` 与 `docs/index.mdx` 是否残留 `{占位符}`；配置里登记的组件文件是否真的存在。
 2. 是否还留着 `.vitepress/` 或 `vitepress` 依赖（旧工作区没迁干净）。
-3. `docs/_nav.json` 是否合法 JSON、每条链接是否指向真实页面、是否有「课程」入口。
+3. 站点结构：`scripts/sidebar.mjs` 是否存在；`rspress.config.ts` 里的 `themeConfig.nav` / `themeConfig.sidebar` 是否还在；`docs/` 下是否误留了 `_meta.json`（会让 Rspress 2 直接退出）或 `_nav.json`（已有 config nav 时它不会生效）。
 4. 每个 `docs/lessons/NNNN-*.mdx`：编号是否从 1 连续、`title`/`description` 是否齐全、是否有 `Quiz`/`Retrieval`/`Steps` 之一、是否有 `<Source>`。
 5. 课程里的 `<Source url>` 是否登记在 `RESOURCES.md`。
 6. 课程里 `/GLOSSARY#anchor` 引用的锚点是否存在。

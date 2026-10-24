@@ -1,5 +1,29 @@
 # 变更记录
 
+## 2.0.1 — 2026-10-24
+
+修 2.0.0 的站点结构缺陷：**课程站没有一份全站共用的目录**。
+
+2.0.0 依赖 Rspress 的自动导航，结果是侧边栏按目录切分——`/lessons/*` 只看到课程，`/MISSION`、`/GLOSSARY` 左侧一片空白，学到第 5 课时既回不到学习目标也跳不到速查页。这不是配置问题，是 Rspress 2 的默认行为。
+
+**结构变更**
+
+- 新增 `scripts/sidebar.mjs`：扫描 `docs/` 生成导航与侧边栏，`themeConfig.sidebar` 用 `'/'` 作为兜底 key，**全站所有页面共用一份侧边栏**。
+- **删除 `docs/_nav.json`。** 导航改为代码生成，`docs/` 里现在只有内容，没有任何结构文件。加课不再需要改配置。
+- 顶部导航从「指向第 1 课」变成固定信息架构（课程/速查/目标/术语表），不再随课程数量变化。
+- 首页 frontmatter 补上 `title` 与 `description`。
+
+**为什么不能用天真的写法**（都是实测，不是推测）
+
+- 根级 `docs/_meta.json` 在 Rspress 2 里会直接 `process.exit(1)`——源码里那个函数叫 `hintNavJsonChangeThenPanic`。
+- `rspress.config.ts` 内部不能写复杂正则：config 由 rsbuild 的 TS loader 加载，正则会让解析器提前截断并报 `ParseError`。所以扫描逻辑放在普通模块里。
+
+**自检脚本同步**
+
+- 新增：`scripts/sidebar.mjs` 缺失、`themeConfig.sidebar` 缺失、`docs/_meta.json` 残留，都直接报错。
+- 新增：config 已定义 nav 却还留着 `docs/_nav.json`，报警告（它不会生效）。
+- 移除：`_nav.json` 的 JSON 合法性与链接可达性检查——文件不再存在。
+
 ## 2.0.0 — 2026-10-24
 
 站点层从 VitePress 换成 **Rspress 2**。技能 API（mission、课程、复习轮、learning record）不变，工作区布局变了。

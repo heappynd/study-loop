@@ -22,7 +22,8 @@ license: MIT
 - `docs/lessons/NNNN-<slug>.mdx`：教学的基本单位。一课只教一个紧贴 mission 的小目标，自包含。发布于 `/lessons/NNNN-<slug>`。**编号即顺序**，侧边栏按文件名自动排序。
 - `docs/reference/<slug>.mdx`：压缩后的知识——速查表、算法、语法、体式、动作序列。发布、可打印，为快速查阅而生。
 - `docs/GLOSSARY.mdx`：本课程统一的术语。发布于 `/GLOSSARY`。格式见 [GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md)。
-- `docs/_nav.json`：顶部导航。Rspress 用它生成导航栏。
+
+`docs/` 里只放页面，不放结构文件。导航与侧边栏由 `scripts/sidebar.mjs` 扫描 `docs/` 生成，所以**`docs/` 下不应该出现 `_nav.json` 或 `_meta.json`**。
 
 不发布的（在根目录，永远不会进构建）：
 
@@ -32,6 +33,7 @@ license: MIT
 - `components/*.tsx`：跨课程复用的交互组件，由 `rspress.config.ts` 全局注册。见 [SITE-FORMAT.md](./SITE-FORMAT.md)。
 - `styles/course.css`：共享样式表。每个页面都继承它，站点的统一感来自这里。
 - `scripts/check.mjs`：`npm run course:check` 的自检脚本。
+- `scripts/sidebar.mjs`：导航与侧边栏的生成器。加课不用改它，改站点的信息架构才改它。
 
 确切的目录结构、frontmatter 契约、导航与侧边栏行为、组件 API 都在 [SITE-FORMAT.md](./SITE-FORMAT.md)。**写第一课之前先读它。**
 
@@ -52,7 +54,7 @@ license: MIT
 3. **找资源**。在开始教学前先填 `RESOURCES.md`：高可信、带注解的来源，每条都记 `checked:` 日期。**不要相信自己的记忆**。
 4. **看站点状态**。检查 `package.json`、`rspress.config.ts`、`docs/index.mdx`。决定是搭脚手架、采纳现有站点，还是合并。规则见 [SITE-FORMAT.md](./SITE-FORMAT.md) 的「脚手架」一节。
 5. **搭或采纳**。没有 Rspress 项目就复制 `templates/` 并安装依赖；已有项目先读后写，绝不覆盖既有内容。
-6. **写第一课**。短，一个能摸到的小胜利，落在最近发展区内。写完把「课程」加进 `docs/_nav.json`，指向它。
+6. **写第一课**。短，一个能摸到的小胜利，落在最近发展区内。侧边栏和导航会自动收录它——不需要改任何配置文件。
 7. **自检、构建、起服务**。依次跑 `npm run course:check`、`npm run build`，再起 dev server，确认 URL 能访问，把课程地址给用户。
 
 ## 教学理念
@@ -96,7 +98,7 @@ license: MIT
 - 至少包含一次费力的互动：`<Quiz>`、`<Retrieval>` 或 `<Steps>`。
 - 结尾提醒用户可以追问教学 agent；如果存在下一课，给出链接。
 
-课程之间的导航是自动的：侧边栏按文件名列出整个 `lessons/` 分区，页脚有上一页/下一页。除非序列真的分叉，不要手工维护「上一课/下一课」链接，也不用手写侧边栏清单。
+课程之间的导航是自动的：左侧侧边栏按文件名列出整个 `lessons/` 分区，并且**全站共用同一份**——在 `/MISSION`、`/GLOSSARY`、任一速查页上都能看到完整课程目录。页脚还有上一页/下一页。所以不要手工维护「上一课/下一课」链接，也不要自己写侧边栏清单。
 
 ## 复习轮（Returning Sessions）
 
@@ -185,5 +187,5 @@ mission 会随着能力变化。这很正常：更新 `docs/MISSION.mdx`，补�
 - 构建**不需要**停 dev server：Rspress 的产物目录和 dev server 不冲突，可以边跑边构建。别再教用户先停服务。
 - `rspress.config.ts`（`SITE_TITLE`、`SITE_DESCRIPTION`）和 `docs/index.mdx` 里没有残留的 `{占位符}`。
 - dev server 在跑，课程 URL 返回 HTTP 200。
-- 第 1 课已经加进 `docs/_nav.json` 的导航。
+- 新课已经出现在侧边栏里（打开任意一页看左侧「课程」组），并且 `/MISSION`、`/GLOSSARY` 也有同一份侧边栏，不是孤儿页。
 - 只有在**有学习证据**时才更新 `learning-records/`，不能因为「讲过了」就写。
