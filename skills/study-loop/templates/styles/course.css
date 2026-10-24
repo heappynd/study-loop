@@ -1,0 +1,335 @@
+/* ---------------------------------------------------------------------------
+ * 课程样式表。
+ *
+ * 这是一个课程站点，不是产品首页：正文用衬线体，课程里不写行内样式，
+ * 打印规则让速查页可以直接印出来。组件统一用 `sl-` 前缀，避免和主题类名冲突。
+ * ------------------------------------------------------------------------- */
+
+:root {
+  --rp-font-family-base: 'Iowan Old Style', 'Palatino Linotype', Palatino,
+    'Songti SC', 'Noto Serif SC', Georgia, serif;
+  --rp-font-family-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', Menlo,
+    Consolas, monospace;
+}
+
+/* ---- 阅读 --------------------------------------------------------------- */
+
+.rp-doc h1 {
+  letter-spacing: -0.01em;
+}
+
+.rp-doc p,
+.rp-doc li {
+  line-height: 1.75;
+}
+
+.rp-doc a {
+  text-underline-offset: 3px;
+}
+
+/* ---- Quiz --------------------------------------------------------------- */
+
+.sl-quiz {
+  margin: 2rem 0;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+  background: var(--rp-c-bg-soft);
+}
+
+.sl-quiz__question {
+  margin: 0 0 1rem;
+  font-weight: 600;
+}
+
+.sl-quiz__note {
+  font-size: 0.88em;
+  font-weight: 400;
+  color: var(--rp-c-text-3);
+}
+
+.sl-quiz__options {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sl-quiz__options button {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 6px;
+  background: var(--rp-c-bg);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.sl-quiz__options button:hover:not(:disabled):not([aria-disabled='true']) {
+  border-color: var(--rp-c-brand);
+}
+
+.sl-quiz__options button:disabled,
+.sl-quiz__options button[aria-disabled='true'] {
+  color: inherit;
+  cursor: default;
+  opacity: 1;
+}
+
+.sl-quiz__feedback:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 6px;
+  border-radius: 4px;
+}
+
+.sl-quiz__options button .mark {
+  font-family: var(--rp-font-family-mono);
+  font-size: 0.8em;
+  color: var(--rp-c-text-3);
+}
+
+.sl-quiz__options button.picked {
+  border-color: var(--rp-c-brand);
+}
+
+.sl-quiz__options button.answer {
+  border-color: #2f7d4f;
+  background: #e6f4ea;
+}
+
+.rp-dark .sl-quiz__options button.answer {
+  background: rgba(47, 125, 79, 0.18);
+}
+
+.sl-quiz__options button.wrong {
+  border-color: #a33;
+  background: #fbe9e9;
+  text-decoration: line-through;
+  text-decoration-color: #a33;
+}
+
+.rp-dark .sl-quiz__options button.wrong {
+  background: rgba(170, 51, 51, 0.18);
+}
+
+.sl-quiz__actions {
+  margin-top: 0.75rem;
+}
+
+.sl-quiz__actions button,
+.sl-quiz__reset {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 6px;
+  background: var(--rp-c-bg);
+  color: var(--rp-c-text-1);
+  font: inherit;
+  cursor: pointer;
+}
+
+.sl-quiz__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.sl-quiz__feedback {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rp-c-divider);
+}
+
+.sl-quiz__feedback p {
+  margin: 0.25rem 0;
+}
+
+.sl-quiz__reset {
+  margin-top: 0.5rem;
+}
+
+/* ---- Retrieval ---------------------------------------------------------- */
+
+.sl-retrieval {
+  margin: 2rem 0;
+  padding: 1.25rem 1.4rem;
+  border-left: 3px solid var(--rp-c-brand);
+  border-radius: 0 8px 8px 0;
+  background: var(--rp-c-bg-soft);
+}
+
+.sl-retrieval__prompt {
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+}
+
+.sl-retrieval__toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--rp-c-brand);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.sl-retrieval__answer {
+  display: none;
+  margin-top: 0.75rem;
+}
+
+.sl-retrieval.is-open .sl-retrieval__answer {
+  display: block;
+}
+
+/* ---- Steps -------------------------------------------------------------- */
+
+.sl-steps {
+  display: grid;
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.sl-step {
+  position: relative;
+  padding-left: 2.5rem;
+  counter-increment: step;
+}
+
+.sl-step::before {
+  position: absolute;
+  top: 0.1rem;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 50%;
+  color: var(--rp-c-text-2);
+  font-family: var(--rp-font-family-mono);
+  font-size: 0.75rem;
+  content: counter(step);
+}
+
+.sl-step label {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sl-step__body {
+  margin-top: 0.35rem;
+  color: var(--rp-c-text-2);
+}
+
+.sl-step__body p {
+  margin: 0.25rem 0;
+}
+
+.sl-step.is-done .sl-step__title {
+  color: var(--rp-c-text-3);
+  text-decoration: line-through;
+}
+
+.sl-step.is-done::before {
+  border-color: #2f7d4f;
+  color: #2f7d4f;
+}
+
+/* ---- Source ------------------------------------------------------------- */
+
+.sl-source {
+  margin: 1.5rem 0 2rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+  background: var(--rp-c-bg-mute);
+}
+
+.sl-source__label {
+  margin: 0 0 0.35rem;
+  color: var(--rp-c-text-3);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sl-source__title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.sl-source__author,
+.sl-source__note {
+  margin: 0.25rem 0 0;
+  color: var(--rp-c-text-2);
+  font-size: 0.9rem;
+}
+
+/* ---- 打印 --------------------------------------------------------------- */
+
+@media print {
+  .rp-nav,
+  .rp-sidebar,
+  .rp-outline,
+  .rp-doc-footer,
+  .sl-quiz__actions,
+  .sl-quiz__reset,
+  .sl-retrieval__toggle,
+  .sl-step input {
+    display: none !important;
+  }
+
+  .sl-retrieval__answer {
+    display: block !important;
+  }
+
+  .sl-quiz,
+  .sl-retrieval,
+  .sl-source {
+    border-color: #999;
+    background: none;
+  }
+
+  .sl-quiz__options button {
+    border-color: #999;
+    background: none;
+  }
+
+  .sl-quiz__options button.answer {
+    font-weight: 700;
+  }
+
+  .sl-quiz__options button.answer::after {
+    margin-left: 0.4rem;
+    font-family: var(--rp-font-family-mono);
+    font-size: 0.8em;
+    content: '<- correct';
+  }
+
+  .sl-quiz__options button.wrong {
+    text-decoration: none;
+  }
+
+  .rp-doc a {
+    text-decoration: none;
+  }
+
+  .rp-doc a[href^='http']::after {
+    color: #555;
+    font-size: 0.8em;
+    content: ' (' attr(href) ')';
+  }
+}

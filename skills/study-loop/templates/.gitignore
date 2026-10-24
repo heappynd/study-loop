@@ -1,3 +1,9 @@
-node_modules
-.vitepress/cache
-.vitepress/dist
+# 依赖与构建产物
+node_modules/
+doc_build/
+.rspress/
+
+# 本地
+.DS_Store
+*.local
+*.log*

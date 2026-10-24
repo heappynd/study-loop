@@ -3,12 +3,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "docs:dev": "vitepress dev",
-    "docs:build": "vitepress build",
-    "docs:preview": "vitepress preview",
+    "dev": "rspress dev",
+    "build": "rspress build",
+    "preview": "rspress preview",
     "course:check": "node scripts/check.mjs"
   },
+  "dependencies": {
+    "@rspress/core": "^2.0.23"
+  },
   "devDependencies": {
-    "vitepress": "^1.6.4"
+    "@types/node": "^22.8.1",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "typescript": "^6.0.3"
   }
 }

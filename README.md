@@ -4,7 +4,7 @@
 
 不是给你一篇教程，而是给你一个**有状态的学习站点**：先问清你为什么学，再拆成 15 分钟一节的课程，每节带测验和检索练习，隔几天回来还会先考你旧课。学到的东西留在一个能随时回看、能打印、能分享的网站上。
 
-> Teach any topic as a stateful course workspace: mission-driven, 15-minute lessons, retrieval practice, spaced review, and a VitePress site you keep.
+> Teach any topic as a stateful course workspace: mission-driven, 15-minute lessons, retrieval practice, spaced review, and a Rspress site you keep.
 
 ## 安装
 
@@ -40,24 +40,42 @@ npx skills add heappynd/study-loop --list
 
 ```
 my-topic/
-├── MISSION.md                  # 为什么学，以及可检验的成功标准（发布在 /MISSION）
-├── lessons/
-│   └── 0001-first-step.md      # 一节一个目标（发布在 /lessons/0001-first-step）
-├── reference/                  # 速查表，为快速查阅而生，可打印
+├── docs/                       # 只有这里会被发布（Rspress 的文档根）
+│   ├── _nav.json               # 顶部导航
+│   ├── index.mdx               # 课程首页（hero + 三张卡片）
+│   ├── MISSION.mdx             # 为什么学、什么算学会
+│   ├── GLOSSARY.mdx            # 本课程统一术语
+│   ├── lessons/
+│   │   └── 0001-first-step.mdx # 一节一个目标；编号即顺序
+│   └── reference/              # 速查表，为快速查阅而生，可打印
+├── components/                 # 5 个 React 组件（测验、回忆、步骤、来源）
+├── styles/course.css           # 衬线正文、明暗主题、打印规则
+├── scripts/check.mjs           # npm run course:check
 ├── learning-records/           # 你已掌握什么、证据是什么（不发布）
-├── GLOSSARY.md                 # 本课程统一术语（发布在 /GLOSSARY）
 ├── RESOURCES.md                # 可信来源清单（不发布）
 ├── NOTES.md                    # 你的偏好与教学笔记（不发布）
-└── .vitepress/                 # 站点配置与 5 个交互组件
+└── rspress.config.ts
 ```
 
-课程是**网站**，不是一堆 markdown 文件。永远不需要你去打开 `.md` 源文件——agent 会起 dev server 把页面打开给你。
+课程是**网站**，不是一堆 markdown 文件。永远不需要你去打开 `.mdx` 源文件——agent 会起 dev server 把页面打开给你。
+
+## 为什么是 Rspress
+
+上一版用 VitePress。换成 Rspress 2 之后，几件原本要自己维护的事消失了：
+
+- **侧边栏不用配置。** 往 `docs/lessons/` 里丢 `0002-xxx.mdx`，它自动出现在侧边栏，按文件名排序，文字取页面 `title`。VitePress 那套手写扫描逻辑不再需要。
+- **组件是真的组件。** 课程是 MDX，测验写 `options={['A','B']}`、`answer={0}`，不再是 Vue 的 `:options="[...]"` 和转义引号陷阱。
+- **死链会挡住构建。** 指向不存在页面的链接让 `npm run build` 直接失败并指出文件。
+- **构建和 dev server 可以同时跑。** 不用再「先停服务再构建」。
+- **自带中文全文搜索**，不需要额外插件。
 
 ## 交互组件
 
+都在 `rspress.config.ts` 里全局注册，课程页直接写标签，不用 import。
+
 | 组件 | 作用 |
 | --- | --- |
-| `<Quiz>` | 单选测验，选项等长、正确项位置分散；判分后焦点移到反馈区，键盘和读屏可用 |
+| `<Quiz>` | 单选/多选测验，选项等长、正确项位置分散；判分后焦点移到反馈区，键盘与读屏可用 |
 | `<Retrieval>` | 空白回忆：先写，再展开对照 |
 | `<Steps>` / `<Step>` | 动手步骤，带失败排查；勾选状态刷新后保留 |
 | `<Source>` | 标注权威来源，附链接 |
@@ -70,32 +88,31 @@ my-topic/
 npm run course:check
 ```
 
-会拦下这些：站点标题还是占位符、课程编号与文件名不一致、缺必需 frontmatter、整节课没有任何费力互动、缺来源、来源没登记在 `RESOURCES.md`、术语锚点不存在、新课程没加进首页索引、Quiz 属性里写了会截断解析的转义引号。
+会拦下这些：站点标题还是占位符、课程编号不连续、缺必需 frontmatter、整节课没有任何费力互动、缺来源、来源没登记在 `RESOURCES.md`、术语锚点不存在、导航链接指向不存在的页面、以及从 VitePress 带过来的 `:options="..."` 写法和带 `.md` 扩展名的链接。
 
 ## 环境要求
 
-- Node.js 22.20+（`npx skills` 要求）；课程工作区本身只需 Node 18+（VitePress 1.6）
-- 首次搭建需要联网安装 `vitepress`
-- 站点构建通过后才算交付：`npm run docs:build`
-
-> 构建前必须先停掉 dev server，否则 VitePress 清理 `dist` 会失败。这条已经写进 skill 的完成标准。
+- Node.js 22.20+（`npx skills`）；课程工作区本身要求 Node 20.19+ / 22.12+（Rspress 2）
+- 首次搭建需要联网安装 `@rspress/core`
+- 构建通过才算交付：`npm run build`（产物在 `doc_build/`）
 
 ## 仓库结构
 
 ```
 study-loop/
 ├── README.md
+├── CHANGELOG.md
 ├── LICENSE
 └── skills/
     └── study-loop/
         ├── SKILL.md                  # 入口：教学哲学与执行流程
-        ├── SITE-FORMAT.md            # 目录结构、frontmatter 契约、组件 API
+        ├── SITE-FORMAT.md            # 目录结构、frontmatter 契约、组件 API、部署
         ├── MISSION-FORMAT.md         # 目标怎么写才算可检验
         ├── RESOURCES-FORMAT.md       # 来源清单规范
         ├── GLOSSARY-FORMAT.md        # 术语表规范
         ├── LEARNING-RECORD-FORMAT.md # 学习记录与证据规范
         ├── LESSON-TEMPLATE.md        # 写课起手模板
-        ├── templates/                # 站点脚手架（配置、主题、组件、自检脚本）
+        ├── templates/                # 站点脚手架（配置、组件、样式、首页、自检脚本）
         └── agents/openai.yaml
 ```
 
@@ -106,7 +123,7 @@ study-loop/
 - **一个工作区一个 mission。** 两个不相关的主题是两个工作区；混在一起，课程就没有落点。
 - **不覆盖已有内容。** 目录里已经有应用或另一门课时，先停下来问，而不是合并或替换。
 - **覆盖率不等于学会。** `learning-records/` 只在有证据（答对了哪道题、做出了哪个东西）时才写。
-- **站点属于用户。** 课程文件是普通的 markdown + Vue 组件，随时可以改、可以带走、可以发到自己的域名。
+- **站点属于用户。** 课程文件是普通的 MDX + React 组件，随时可以改、可以带走、可以发到自己的域名。
 
 ## License
 

@@ -1,47 +1,43 @@
-# 工作区格式（VitePress）
+# 工作区格式（Rspress）
 
-教学工作区**就是**一个 VitePress 站点。这份文件是契约：哪些内容会发布、文件放哪、frontmatter 有哪些必填项、侧边栏怎么自动生成、共享组件怎么用。
-
-下面的路径都相对工作区根目录，它同时也是 VitePress 的文档根。**不要**再引入 `docs/` 或 `srcDir` 层级。
+教学工作区**就是**一个 Rspress 2 站点。这份文件是契约：哪些内容会发布、文件放哪、frontmatter 有哪些必填项、导航与侧边栏怎么来、共享组件怎么用。
 
 ## 目录结构
 
 ```
 .
-├── .vitepress/
-│   ├── config.ts              # 站点配置 + 自动生成的侧边栏
-│   └── theme/
-│       ├── index.ts           # 继承默认主题，全局注册组件
-│       ├── styles/course.css  # 共享排版、组件样式、打印规则
-│       └── components/
-│           ├── Quiz.vue
-│           ├── Retrieval.vue
-│           ├── Steps.vue
-│           ├── Step.vue
-│           └── Source.vue
+├── rspress.config.ts          # 站点配置：标题、语言、全局样式、全局组件
+├── tsconfig.json
+├── package.json
+├── docs/                      # Rspress 的文档根，只有这里会被发布
+│   ├── _nav.json              # 顶部导航
+│   ├── index.mdx              # 首页（pageType: home）
+│   ├── MISSION.mdx            # 发布于 /MISSION
+│   ├── GLOSSARY.mdx           # 发布于 /GLOSSARY
+│   ├── lessons/
+│   │   ├── 0001-<slug>.mdx
+│   │   └── 0002-<slug>.mdx
+│   └── reference/
+│       └── <slug>.mdx
+├── components/                # 全局 MDX 组件（React）
+│   ├── quiz.tsx               # → <Quiz>
+│   ├── retrieval.tsx          # → <Retrieval>
+│   ├── steps.tsx              # → <Steps>
+│   ├── step.tsx               # → <Step>
+│   └── source.tsx             # → <Source>
+├── styles/course.css          # 共享排版、组件样式、打印规则
 ├── scripts/check.mjs          # course:check 自检脚本
-├── lessons/
-│   ├── 0001-<slug>.md
-│   └── 0002-<slug>.md
-├── reference/
-│   └── <slug>.md
 ├── learning-records/          # 状态，不是内容
 │   └── 0001-<slug>.md
-├── MISSION.md                 # 发布于 /MISSION
-├── GLOSSARY.md                # 发布于 /GLOSSARY
 ├── RESOURCES.md               # 不进站点
-├── NOTES.md                   # 不进站点
-├── index.md                   # 课程首页
-└── package.json
+└── NOTES.md                   # 不进站点
 ```
 
 ### 发布什么，不发布什么
 
-发布：`index.md`、`MISSION.md`、`GLOSSARY.md`、`lessons/**`、`reference/**`。
+**`docs/` 是唯一的发布边界。** Rspress 只扫描 `root`（默认 `docs`），所以根目录的 `RESOURCES.md`、`NOTES.md`、`learning-records/` 天然不会出现在侧边栏、搜索或构建产物里——不需要额外的排除配置。
 
-不发布（配置里的 `srcExclude`）：`RESOURCES.md`、`NOTES.md`、`learning-records/**`。这些是给 agent 看的状态，不能出现在侧边栏、搜索或构建产物里。
-
-不要为了方便把状态文件挪进发布区。课程要引用来源时，引原文那一句 + 来源 URL，而不是链到 `RESOURCES.md`。
+不要为了方便把状态文件挪进 `docs/`：一旦进去，它就会被发布、被搜索索引，还会出现在页脚导航里。课程要引用来源时，引原文那一句 + 来源 URL，而不是链到 `RESOURCES.md`。
 
 ## Frontmatter
 
@@ -50,85 +46,91 @@
 ```yaml
 ---
 title: "读懂一行日志"
-lesson: 7
-summary: "一句话，首页与侧边栏可复用。"
+description: "一句话：这页讲什么。会被用作页面 meta description。"
 reviewAfter: "3d"
-sources:
-  - title: "The Twelve-Factor App"
-    url: "https://12factor.net/logs"
-    author: "Adam Wiggins"
-    note: "开课前先读 Logs 一节。"
 ---
 ```
 
 | 键 | 出现在 | 用途 |
 | --- | --- | --- |
-| `title` | 所有页面 | 侧边栏文字与页面标题。必填。 |
-| `lesson` | 课程 | 整数。侧边栏排序依据，必须与文件名开头的数字一致（`index.md` 除外）。 |
-| `order` | 速查页 | 可选整数。不写则取文件名开头的数字。 |
-| `summary` | 课程、速查页 | 一句话。首页与 agent 判断「下一课学什么」时用。 |
+| `title` | 所有页面 | 页面标题，也是**侧边栏文字**。必填。 |
+| `description` | 所有页面 | 一句话摘要。Rspress 会用它生成 `<meta name="description">`，搜索与分享都靠它。必填。 |
 | `reviewAfter` | 课程 | 可选，默认 `3d`。多久之后该复习这一课，供 [SKILL.md](./SKILL.md) 的「复习轮」判断到期。 |
-| `sources` | 课程 | 主要来源与引用，必须全部登记在 `RESOURCES.md`。 |
 
-`lesson: 7` 与 `0007-<slug>.md` 必须一致——`course:check` 会把它当成错误拦下来，别指望构建去发现。
+首页用 `pageType: home` + `hero` / `features`；课程与速查页保持默认的 `doc` 类型，不用写 `pageType`。
 
-其他键（`outline: deep`、`aside: false`、`prev: false`）属于 VitePress，不在这份契约里。
+其他可用字段（都有默认值，不需要就别写）：`sidebar: false`、`outline: false`、`footer: false`、`search: false`。
 
-## 侧边栏
+**没有 `lesson`、`order` 字段。** Rspress 的侧边栏按**文件名排序**，顺序由 `0001-`、`0002-` 前缀决定；`title` 自动成为侧边栏文字。所以「编号与文件名一致」不是靠 frontmatter 对照，而是靠文件名本身——`course:check` 会检查编号是否从 1 开始连续递增。
 
-侧边栏在配置加载时扫描文件系统生成。没有清单要维护，加课不需要额外步骤。
+## 导航与侧边栏
+
+两者都由 Rspress 生成，只有一个文件需要维护。
+
+**导航栏**：`docs/_nav.json`，一个数组，每项 `{ "text": "...", "link": "..." }`，可加 `activeMatch` 正则。链接**不带扩展名**：`/lessons/0001-take-one-field`，不是 `/lessons/0001-take-one-field.mdx`。
+
+```json
+[
+  { "text": "课程", "link": "/lessons/0001-take-one-field", "activeMatch": "^/lessons/" },
+  { "text": "速查", "link": "/reference/filters-basics", "activeMatch": "^/reference/" },
+  { "text": "目标", "link": "/MISSION" },
+  { "text": "术语表", "link": "/GLOSSARY" }
+]
+```
+
+**侧边栏**：不用维护。Rspress 看到 `docs/lessons/` 就按文件名排序列出里面的每一页，文字取各页 `title`。加课不需要动任何配置。
 
 规则：
 
-- `lessons/` 按 `lesson` 排序，缺省取 `order`，再缺省取文件名开头的数字。
-- `reference/` 按 `order` 排序（缺省取文件名数字），再按标题。
-- `lessons/` 或 `reference/` 里的 `index.md` 不进列表，它是该分区的落地页。
-- 以 `_` 开头的文件跳过：草稿用 `_draft.md`。
-- 空分区自动省略，所以一个还没有课程的新工作区也能构建。
-- `GLOSSARY.md` 存在时追加到 Reference 分区末尾。
-- `MISSION` 常驻导航栏。
-
-要手工分组，就把 `config.ts` 里生成的那一组替换成手写数组。**不要**在生成结果旁边再挂一份手写列表——会重复。
+- 顺序 = 文件名顺序，所以**必须**用 `0001-` 这类零填充编号。`10-` 会排在 `2-` 前面。
+- 侧边栏是**按目录分区**的：`/lessons/*` 显示课程列表，`/reference/*` 显示速查列表，根目录页面（`/MISSION`、`/GLOSSARY`）不显示侧边栏。这是好事，不要为了「统一」去手写一份全站清单。
+- 以 `_` 开头的文件不进路由（`_draft.mdx` 可以当草稿）。
+- 想手工分组时才用 `_meta.json`——那是可选的高级用法，课程站默认不需要。
 
 ## 脚手架
 
 ### 先探测
 
-1. `package.json` 的依赖里有 `vitepress` → 站点已存在。
-2. `.vitepress/config.ts`（或 `docs/.vitepress/config.ts`）→ 站点已存在，即使没有 lock 文件。
-3. 两者都没有 → 搭脚手架。
+1. 有 `rspress.config.ts` → 站点已存在。
+2. `package.json` 的依赖里有 `@rspress/core` 或 `rspress` → 站点已存在。
+3. 只有 `.vitepress/` → **这是旧版工作区**，问用户要不要迁移到 Rspress，别直接覆盖。
+4. 三者都没有 → 搭脚手架。
 
 ### 搭脚手架
 
-从本 skill 的 `templates/` 复制这些：
+从本 skill 的 `templates/` **整份**复制到工作区根目录：
 
-- `templates/package.json`（若工作区没有 package.json）
-- `templates/.gitignore`（若工作区没有 .gitignore）
-- `templates/.vitepress/config.ts`
-- `templates/.vitepress/theme/index.ts`
-- `templates/.vitepress/theme/styles/course.css`
-- `templates/.vitepress/theme/components/*.vue`
-- `templates/scripts/check.mjs`
-- `templates/index.md`（复制后**立刻**替换占位符）
+- `package.json`（若工作区没有；有就合并 scripts，不要覆盖已有依赖）
+- `tsconfig.json`
+- `rspress.config.ts`
+- `.gitignore`（工作区已有则不要覆盖）
+- `components/*.tsx`
+- `styles/course.css`
+- `docs/index.mdx`、`docs/_nav.json`
+- `scripts/check.mjs`
 
-`LESSON-TEMPLATE.md` 是写课的参考，放在 skill 根目录而不是 `templates/` 里：`templates/` 会被整份复制进工作区，模板若在里面就会变成一个全是占位符的页面。它也不能被复制进 `lessons/`。
+`LESSON-TEMPLATE.md` 是写课的参考，放在 skill 根目录而不是 `templates/` 里：`templates/` 会被整份复制进工作区，模板若在里面就会变成一个全是占位符的页面。它也不能被复制进 `docs/lessons/`。
 
-依赖版本用 `vitepress ^1.6.4`。**不要**写成 `^2.0.0`：2.x 目前只有 `2.0.0-alpha`，`^2.0.0` 在 npm 上解析不到，`npm install` 会直接 404 失败。
+复制完**立刻**替换 `rspress.config.ts` 的 `SITE_TITLE`/`SITE_DESCRIPTION` 和 `docs/index.mdx` 里的占位符，再装依赖：
 
-没装依赖时用检测到的包管理器装：有 `pnpm-lock.yaml` 或 `packageManager` 字段就用 pnpm，否则 npm。工作区已有 vitepress 版本范围就沿用，只有完全没有时才自己挑。安装失败要原样把错误抛给用户，绝不悄悄换包管理器或换大版本。
+```bash
+npm install
+```
 
-`.gitignore` 已经在模板里（`templates/.gitignore`），复制过去即可；工作区已有则不要覆盖。
+依赖版本用 `@rspress/core ^2.0.23`。Rspress 2 要求 Node.js **20.19+ 或 22.12+**，低于这个版本会直接起不来；先 `node -v` 看一眼。
+
+工作区已有 `@rspress/core` 版本范围就沿用，只有完全没有时才用模板里的。没装依赖时用检测到的包管理器：有 `pnpm-lock.yaml` 或 `packageManager` 字段就用 pnpm，否则 npm。安装失败要原样把错误抛给用户，绝不悄悄换包管理器或换大版本。
 
 ### 采纳已有站点
 
-先读 `.vitepress/config.ts` 和 `index.md`，再动笔。然后：
+先读 `rspress.config.ts` 和 `docs/index.mdx`，再动笔。然后：
 
-- 合并 `themeConfig`（保留用户的导航、标题、描述、社交链接）。
-- 合并 `srcExclude`，不是替换数组。
-- 加主题与组件注册时不要覆盖已有的 `.vitepress/theme/index.ts`：导入并 re-export 他们的主题，再在 `enhanceApp` 里补组件。
-- 其他页面别动。`index.md` 是唯一可能破坏性的改动（把首页改成课程首页），改之前先问用户。
-- 如果站点在 `docs/` 子目录下（很常见），不要把它挪到根目录：在那个目录里工作（`course:check` 也必须在文档根执行），或者显式调整 `config.ts` 里的 `root`。
-- **采纳的站点也要能自检**：复制 `templates/scripts/check.mjs` 到 `scripts/check.mjs`，并在 `package.json` 的 `scripts` 里补 `"course:check": "node scripts/check.mjs"`。否则完成标准里的 `npm run course:check` 对这站点是不可能满足的。
+- 合并配置：保留用户的 `title`、`description`、`nav`、`themeConfig`、插件，只补 `globalStyles` 和 `markdown.globalComponents`。
+- `markdown.globalComponents` 是**数组**：往里追加我们的 5 个组件路径，不要替换掉他们已有的。
+- 如果用户已经有 `theme/` 自定义主题，不要动；我们的组件放在项目根的 `components/`，不冲突。
+- 如果站点在别的目录（`root: 'somewhere'`），按他们的 `root` 走：课程页放 `<root>/lessons/`，`_nav.json` 放 `<root>/`，`course:check` 也要能读到同一个位置——必要时调整 `check.mjs` 里的 `docsDir`。
+- 其他页面别动。`docs/index.mdx` 是唯一可能破坏性的改动（把首页改成课程首页），改之前先问用户。
+- **采纳的站点也要能自检**：复制 `templates/scripts/check.mjs` 到 `scripts/check.mjs`，并在 `package.json` 的 `scripts` 里补 `"course:check": "node scripts/check.mjs"`。
 
 合并会丢用户内容时，停下来问。不要假设有版本控制兜底。
 
@@ -136,17 +138,23 @@ sources:
 
 `npm run course:check` 运行 `scripts/check.mjs`，无第三方依赖。它检查：
 
-1. `config.ts` 与 `index.md` 中是否残留 `{占位符}`。
-2. 每个 `lessons/NNNN-*.md`：`lesson` 是否等于文件名数字、`title`/`summary` 是否齐全、是否至少有 `Quiz`/`Retrieval`/`Steps` 之一、是否有 `<Source`。
-3. 课程里 `<Source url="...">` 与 frontmatter `sources[].url` 是否都登记在 `RESOURCES.md`。
-4. 课程里 `/GLOSSARY#anchor` 引用的锚点在 `GLOSSARY.md` 里是否存在。
-5. 每节课是否已出现在 `index.md` 的链接里。
+1. `rspress.config.ts` 与 `docs/index.mdx` 是否残留 `{占位符}`；配置里登记的组件文件是否真的存在。
+2. 是否还留着 `.vitepress/` 或 `vitepress` 依赖（旧工作区没迁干净）。
+3. `docs/_nav.json` 是否合法 JSON、每条链接是否指向真实页面、是否有「课程」入口。
+4. 每个 `docs/lessons/NNNN-*.mdx`：编号是否从 1 连续、`title`/`description` 是否齐全、是否有 `Quiz`/`Retrieval`/`Steps` 之一、是否有 `<Source>`。
+5. 课程里的 `<Source url>` 是否登记在 `RESOURCES.md`。
+6. 课程里 `/GLOSSARY#anchor` 引用的锚点是否存在。
+7. 从 VitePress 带过来的写法：`:options="..."`、属性里的 `\"`、带 `.md`/`.mdx` 扩展名的链接、`.md` 文件——全是错误。
 
 任何一条不过就退出码 1，并逐条打印文件与原因。**这比让用户在构建时报错便宜。**
 
+`check` 不能替代构建：站内死链、MDX 语法错误、组件 props 类型问题只有 `npm run build` 能发现，构建失败时 Rspress 会直接指到文件。
+
 ## 组件（Components）
 
-所有组件在 `.vitepress/theme/index.ts` 全局注册，课程页里直接写标签，不用 import。
+5 个组件在 `rspress.config.ts` 的 `markdown.globalComponents` 里全局注册，课程页里直接写标签，**不用 import**。
+
+**组件名 = 文件名首字母大写**：`quiz.tsx` → `<Quiz>`。这条规则决定了两件事：一个文件只能有一个默认导出；新增组件必须同时改 `rspress.config.ts`，否则标签会被当成普通文本渲染。
 
 界面文案跟随站点 `lang`：`zh-*` 显示中文，其余显示英文。不要在课程里手写这些文案。
 
@@ -154,30 +162,32 @@ sources:
 
 单选或多选，即时判分，可重试。
 
-```md
+```mdx
 <Quiz
   question="哪个次数区间最匹配增肌？"
-  :options="['1-3 次', '6-12 次', '15-20 次']"
-  :answer="1"
+  options={['1-3 次', '6-12 次', '15-20 次']}
+  answer={1}
   explanation="增肌最依赖中等负荷下接近力竭的训练。"
 />
 ```
 
-```md
+```mdx
 <Quiz
   multiple
   question="下面哪两个是容量地标？"
-  :options="['MEV', 'RPE', 'MRV', '1RM']"
-  :answer="[0, 2]"
+  options={['MEV', 'RPE', 'MRV', '1RM']}
+  answer={[0, 2]}
   explanation="MEV 与 MRV 界定了有效容量区间。"
 />
 ```
 
-Props：`question`（字符串）、`options`（字符串数组）、`answer`（数字或数字数组）、`multiple`（布尔，默认 false）、`explanation`（字符串，可选）。
+Props：`question`（字符串）、`options`（字符串数组，用 `{}` 包住）、`answer`（数字或数字数组）、`multiple`（布尔，默认 false）、`explanation`（字符串，可选）。
+
+注意 `options` 和 `answer` 用的是 JSX 表达式 `{}`，不是 Vue 的 `:options`。写成 `:options="[...]"` 不会报错，只会把整段当成文本渲染出来——`course:check` 会拦下来。
 
 写题规则：选项措辞与长度要平行；正确项的位置在不同课之间要变化；不要「以上都对」；题干里不能出现答案。
 
-**属性里不要出现双引号。** `question="…"` 里再写 `\"` 这种转义，Vue 模板解析会直接失败（`Attribute name cannot contain U+0022`）。题干要引用 JSON 时，把 JSON 放进前面的代码块，题干里指代它；或者用单引号包属性：`question='…"…'`。`course:check` 会把裸的 `\"` 当错误拦下来。
+**属性值里不要出现未转义的 `"`。** JSX 的双引号字符串到第一个 `"` 就结束了，`question="他喊了 \"hello\""` 会让编译直接失败。题干要引用 JSON 或带引号的代码时，把那段放进前面的代码块、题干里指代它；或者用单引号包属性：`question='他喊了 "hello"'`。
 
 行为约定：单选点击即判分；判分后按钮保留可聚焦性（`aria-disabled`，不是 `disabled`），焦点自动移到反馈区，键盘与读屏用户不会丢失上下文。
 
@@ -185,7 +195,7 @@ Props：`question`（字符串）、`options`（字符串数组）、`answer`（
 
 先凭记忆自由回想，需要时才展开答案。
 
-```md
+```mdx
 <Retrieval prompt="凭记忆说：三个容量地标分别界定什么？">
 
 MEV 是能增肌的最小量，MAV 是有效的中间区间，MRV 是可恢复的最大量。
@@ -193,7 +203,7 @@ MEV 是能增肌的最小量，MAV 是有效的中间区间，MRV 是可恢复�
 </Retrieval>
 ```
 
-Props：`prompt`（字符串）。默认插槽：答案，按 markdown 写。**标签与内容之间要留空行**，否则 markdown 不会被解析。
+Props：`prompt`（字符串）。子内容是答案，按 markdown 写。**标签与内容之间要留空行**，否则 markdown 不会被解析（MDX 的通则，见下）。
 
 答案在 DOM 里（`display:none`），打印时展开。不要拿它做评判——它是自我核对工具。
 
@@ -201,28 +211,30 @@ Props：`prompt`（字符串）。默认插槽：答案，按 markdown 写。**�
 
 现实世界的引导式序列，每步可勾选。勾选状态存在浏览器里，刷新不丢。
 
-```md
+```mdx
 <Steps>
-  <Step title="调整杠铃位置">
+<Step title="调整杠铃位置">
 
-  小腿中段高度，压在脚掌中部上方。
+小腿中段高度，压在脚掌中部上方。
 
-  </Step>
-  <Step title="建立腹压">
+</Step>
+<Step title="建立腹压">
 
-  深吸一口气，360 度撑开。
+深吸一口气，360 度撑开。
 
-  </Step>
+</Step>
 </Steps>
 ```
 
-`<Step>` props：`title`（字符串）。插槽：markdown 正文。`<Steps>` 不接收 props。
+`<Step>` props：`title`（字符串）。子内容是 markdown 正文。`<Steps>` 不接收 props。
+
+Rspress 自带一个基于标题切分的 `Steps` 组件，**不要在课程里 import 它**——我们注册的同名组件会冲突。用全局注册的这个。
 
 ### `<Source>`
 
 每课恰好一个主要来源，放在靠前位置。
 
-```md
+```mdx
 <Source
   title="The Twelve-Factor App"
   url="https://12factor.net/logs"
@@ -233,22 +245,27 @@ Props：`prompt`（字符串）。默认插槽：答案，按 markdown 写。**�
 
 Props：`title`、`url`（必填），`author`、`note`（可选）。`url` 必须已登记在 `RESOURCES.md`。
 
+### MDX 的两条硬规则
+
+1. **JSX 里的 markdown 要留空行。** `<Step title="…">` 后面空一行，正文才按 markdown 解析；紧贴着写会变成纯文本。
+2. **不要在 JSX 里嵌 HTML 标签写样式。** 需要视觉差异就改 `course.css`。
+
 ### 新增组件
 
-1. 写到 `.vitepress/theme/components/`。
-2. 在 `.vitepress/theme/index.ts` 注册。
-3. 在 `course.css` 里用 `tbp-` 前缀配样式，颜色走 VitePress CSS 变量（`--vp-c-bg-soft`、`--vp-c-divider`、`--vp-c-brand-1`），保证明暗主题都对。
+1. 在 `components/` 下写一个 `.tsx`，默认导出，文件名即组件名（`callout.tsx` → `<Callout>`）。
+2. 在 `rspress.config.ts` 的 `markdown.globalComponents` 数组里追加 `path.join(here, 'components/callout.tsx')`。
+3. 在 `course.css` 里用 `sl-` 前缀配样式，颜色走 Rspress CSS 变量（`--rp-c-bg-soft`、`--rp-c-divider`、`--rp-c-brand`、`--rp-c-text-2`），保证明暗主题都对。
 4. 加打印规则：隐藏控件，展开答案内容。
 5. 在本文件里记录 props。
 6. 保持 SSR 安全——规则见 `SKILL.md`。
 
 ## 样式
 
-`course.css` 给全站设了衬线阅读字体，因为这个站点是课程，不是产品官网。课程正文里不要写内联样式和 `<style>` 块；可复用的东西属于样式表。
+`course.css` 通过 `globalStyles` 注入，给全站设了衬线阅读字体，因为这个站点是课程，不是产品官网。课程正文里不要写内联样式和 `<style>` 块；可复用的东西属于样式表。
 
-打印是速查页的一等目标：
+打印是速查页的一等目标，`course.css` 里已经写好：
 
-- 隐藏 Chrome（导航、侧边栏、侧注、页脚、本地导航、「编辑此页」）。
+- 隐藏导航、侧边栏、右栏目录、页脚。
 - 展开 `<Retrieval>` 的答案。
 - `<Quiz>` 标出正确项，而不是显示按钮。
 - 外链在链接文字后面打印 URL。
@@ -258,29 +275,39 @@ Props：`title`、`url`（必填），`author`、`note`（可选）。`url` 必�
 ## 起服务
 
 ```bash
-npm run docs:dev      # 或 pnpm docs:dev
+npm run dev                 # 或 pnpm dev
+npm run dev -- --port 5180  # 端口被占时显式指定，别杀别人的进程
 ```
 
-起服务前先看这个工作区是不是已经在跑了（dev server 会打印 `localhost:<port>`，默认 5173）。已经在跑就复用它，把课程路由给用户；不要另开一个端口。
+起服务前先看这个工作区是不是已经在跑了（dev server 会打印 `Local: http://localhost:<port>`，默认 3000）。已经在跑就复用，把课程路由给用户；不要另开一个端口。
 
-VitePress 用干净路由：`/lessons/0007-reading-a-log-line`、`/GLOSSARY`、`/reference/volume-landmarks`。链接一律用路由，不要写 `.md` 文件名，这样换 URL 策略时不会断。
+dev 下路由不带扩展名：`/lessons/0007-reading-a-log-line`、`/GLOSSARY`、`/reference/volume-landmarks`。带 `.html` 也能打开，但**对外给链接一律用不带扩展名的形式**。
 
-端口被别的项目占了，就显式指定端口（`npm run docs:dev -- --port 5180`），不要杀别人的进程。
-
-## 部署到子路径
-
-要发布到 GitHub Pages 这类子路径站点时，`config.ts` 已经支持用环境变量切换：
+## 构建与部署
 
 ```bash
-DOCS_BASE=/learn-rust/ npm run docs:build
+npm run build      # 产物在 doc_build/
+npm run preview    # 本地预览构建产物
+```
+
+构建和 dev server 可以同时跑，不需要先停服务。
+
+Rspress 会在构建时检查站内链接：指向**不存在页面**的链接会让构建**失败**，报错里直接给出文件。所以「构建过」基本等于「站内没有断链」。
+
+但**锚点不在检查范围里**：`[术语](/GLOSSARY#typo)` 这种页面存在、锚点写错的链接能构建通过，只有 `course:check` 会拦下来。别把构建当成万能校验。
+
+发布到子路径（GitHub Pages 这类）：
+
+```bash
+DOCS_BASE=/learn-rust/ npm run build
 ```
 
 PowerShell：
 
 ```powershell
-$env:DOCS_BASE="/learn-rust/"; npm run docs:build
+$env:DOCS_BASE="/learn-rust/"; npm run build
 ```
 
-不设 `base` 就部署到子路径，静态资源会 404。
+`rspress.config.ts` 里已经写成 `base: process.env.DOCS_BASE || '/'`。**要用配置里的 `base`，不要用 CLI 的 `--base`**：命令行参数只改静态资源前缀，页面之间的链接仍然是根路径，部署到子路径会 404——这一点实测过，别被它骗了。
 
 **Git Bash 的坑**：MSYS 会把以 `/` 开头的环境变量值当作路径转换（`/learn-rust/` 会变成 `C:/Program Files/Git/learn-rust/`）。在 Git Bash 里要加 `MSYS_NO_PATHCONV=1`，或者直接用 PowerShell 构建。

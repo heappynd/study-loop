@@ -1,13 +1,7 @@
 ---
 title: "{课程标题}"
-lesson: 1
-summary: "{一句话，让读者判断要不要打开这一课。}"
+description: "{一句话，让读者判断要不要打开这一课。}"
 reviewAfter: "3d"
-sources:
-  - title: "{主要来源}"
-    url: "https://example.com"
-    author: "{作者}"
-    note: "{开课前读哪一节}"
 ---
 
 # {课程标题}
@@ -33,14 +27,27 @@ sources:
 
 <Quiz
   question="{问题？}"
-  :options="['{选项 A}', '{选项 B}', '{选项 C}']"
-  :answer="0"
+  options={['{选项 A}', '{选项 B}', '{选项 C}']}
+  answer={0}
   explanation="{一两句说明为什么，以及为什么其他选项错。}"
 />
 
 ## 动手
 
 {用户实际要做什么。程序性或身体性的技能用 <Steps> 包 <Step>，一步一个动作。}
+
+<Steps>
+<Step title="{第一步做什么}">
+
+{一步只说一个动作。失败排查也放这里：「如果报 X，说明 Y」。}
+
+</Step>
+<Step title="{第二步做什么}">
+
+{…}
+
+</Step>
+</Steps>
 
 <Retrieval prompt="凭记忆说：{强迫回忆那个概念的问题}">
 
@@ -53,7 +60,7 @@ sources:
 - {一句值得记住的话}
 - {一句值得记住的话}
 
-下一课：[{下一课标题}](/lessons/0002-{slug}) - 速查：[{速查页标题}](/reference/{slug}) - [术语表](/GLOSSARY#term)
+下一课：[{下一课标题}](/lessons/0002-{slug}) · 速查：[{速查页标题}](/reference/{slug}) · [术语表](/GLOSSARY#{term})
 
 ---
 
